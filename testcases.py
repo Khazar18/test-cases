@@ -3,49 +3,68 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
-URL = "http://13.60.232.156:3000"
+URL = "http://54.147.163.224:5000/universities"
 
 @pytest.fixture(scope="function")
-def driver():
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1920,1080")
-    driver = webdriver.Chrome(options=options)
-    driver.get(URL)
-    yield driver
+def setup_browser():
+    global driver
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.set_window_size(1920, 1080)
+    driver.get("http://54.147.163.224:5000/universities")
+
+    yield
     driver.quit()
 
-def test_hero_title(driver):
-    assert "Banking made simple, secure, and fast" in driver.page_source
+def test_page_loads_successfully():
+    title = driver.title
+    assert title is not None
+    assert title.strip() != ""
 
-def test_hero_description(driver):
-    assert "Access your accounts, send money instantly, and manage your finances" in driver.page_source
+def test_sign_up_link_present():
+    link = driver.find_element(By.LINK_TEXT, "Sign Up")
+    assert link.is_displayed()
 
-def test_get_started_button(driver):
-    button = driver.find_element(By.LINK_TEXT, "Get Started")
-    assert button is not None
+def test_sign_up_link_redirects_correctly():
+    driver.find_element(By.LINK_TEXT, "Sign Up").click()
+    assert driver.current_url.endswith("/sign-up")
+    driver.back()
 
-def test_sign_in_button(driver):
-    button = driver.find_element(By.LINK_TEXT, "Sign In")
-    assert button is not None
+def test_page_title_contains_universities():
+    title = driver.title.lower()
+    assert "universities" in title
 
-def test_zelle_instant_transfers(driver):
-    assert "Zelle" in driver.page_source and "Instant Transfers" in driver.page_source
+def test_university_list_exists():
+    rows = driver.find_elements(By.TAG_NAME, "tr")
+    assert len(rows) > 0
 
-def test_secure_banking_feature(driver):
-    assert "Secure Banking" in driver.page_source
+def test_sign_up_form_fields_exist():
+    driver.find_element(By.LINK_TEXT, "Sign Up").click()
+    email_field = driver.find_element(By.CSS_SELECTOR, "input[type='email']")
+    password_field = driver.find_element(By.CSS_SELECTOR, "input[type='password']")
+    assert email_field.is_displayed()
+    assert password_field.is_displayed()
+    driver.back()
 
-def test_instant_transfers_feature(driver):
-    assert "Instant Transfers" in driver.page_source
+def test_back_navigation_to_universities():
+    driver.find_element(By.LINK_TEXT, "Sign Up").click()
+    driver.back()
+    assert driver.current_url.endswith("/universities")
 
-def test_user_friendly_feature(driver):
-    assert "User-Friendly" in driver.page_source
+def test_sign_up_link_attributes():
+    link = driver.find_element(By.LINK_TEXT, "Sign Up")
+    href = link.get_attribute("href")
+    data_discover = link.get_attribute("data-discover")
+    assert href.endswith("/sign-up")
+    assert data_discover == "true"
 
-def test_bank_level_security(driver):
-    assert "Bank-Level Security" in driver.page_source
+def test_single_sign_up_link():
+    links = driver.find_elements(By.LINK_TEXT, "Sign Up")
+    assert len(links) == 1
 
-def test_faq_section(driver):
-    assert "Frequently Asked Questions" in driver.page_source
+def test_page_loads_in_headless_mode():
+    body = driver.find_element(By.TAG_NAME, "body")
+    assert body.is_displayed()
