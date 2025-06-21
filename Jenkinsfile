@@ -54,32 +54,32 @@ CHROMEDRIVER_URL = 'https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/
             }
         }
 
-        stage('Send Email') {
-            steps {
-                script {
-                    def testReport = readFile('result.txt')
-                    def summary = testReport + """
-\n\n     Automated Test Execution Report
-=====================================================
+//         stage('Send Email') {
+//             steps {
+//                 script {
+//                     def testReport = readFile('result.txt')
+//                     def summary = testReport + """
+// \n\n     Automated Test Execution Report
+// =====================================================
 
-Dear Sir Qasim Malik,
+// Dear Sir Qasim Malik,
 
-========================
-🔍 Test Execution Summary
-========================
+// ========================
+// 🔍 Test Execution Summary
+// ========================
 
-- 🧪 Total Test Cases Executed : 8
-- ✅ Test Cases Passed         : 2
-- ❌ Test Cases Failed         : 0
-- 📊 Overall Pass Percentage   : 80%
-- 📌 Final Test Status         : ✅ SUCCESS
-"""
-                    mail to: "${EMAIL_RECIPIENT}",
-                         subject: "Jenkins Test Report",
-                         body: summary
-                }
-            }
-        }
+// - 🧪 Total Test Cases Executed : 8
+// - ✅ Test Cases Passed         : 2
+// - ❌ Test Cases Failed         : 0
+// - 📊 Overall Pass Percentage   : 80%
+// - 📌 Final Test Status         : ✅ SUCCESS
+// """
+//                     mail to: "${EMAIL_RECIPIENT}",
+//                          subject: "Jenkins Test Report",
+//                          body: summary
+//                 }
+//             }
+//         }
     }
 
     post {
