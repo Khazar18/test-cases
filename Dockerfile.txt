@@ -1,44 +1,32 @@
-# escape=`
-FROM mcr.microsoft.com/windows/servercore:ltsc2022
+FROM python:3.10-slim
 
-# Set environment variables
-ENV CHROME_URL=https://dl.google.com/chrome/install/latest/chrome_installer.exe
-ENV CHROMEDRIVER_URL=https://storage.googleapis.com/chrome-for-testing-public/137.0.7151.119/win64/chromedriver-win64.zip
-ENV SETUP_DIR=C:\test-setup
-ENV VENV_DIR=C:\venv
+# Install Chrome
+RUN apt-get update && apt-get install -y \
+    wget unzip curl gnupg2 fonts-liberation libappindicator3-1 xdg-utils \
+    libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 \
+    && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && dpkg -i google-chrome-stable_current_amd64.deb || true \
+    && apt-get -f install -y \
+    && rm google-chrome-stable_current_amd64.deb
 
-# Install Python (You can replace this with another method if needed)
-RUN powershell -Command `
-    Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.10.11/python-3.10.11-amd64.exe -OutFile python-installer.exe ; `
-    Start-Process python-installer.exe -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait ; `
-    Remove-Item python-installer.exe
+# Install ChromeDriver
+RUN CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+') && \
+    DRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json" | grep -A 1 $CHROME_VERSION | grep -oP '\d+\.\d+\.\d+\.\d+') && \
+    wget https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$DRIVER_VERSION/linux64/chromedriver-linux64.zip && \
+    unzip chromedriver-linux64.zip && \
+    mv chromedriver-linux64/chromedriver /usr/bin/chromedriver && \
+    chmod +x /usr/bin/chromedriver && \
+    rm -rf chromedriver-linux64*
 
-# Create directories
-RUN mkdir %SETUP_DIR%
+# Set display env for headless Chrome
+ENV DISPLAY=:99
 
-# Download and install Chrome
-RUN powershell -Command `
-    Invoke-WebRequest -Uri %CHROME_URL% -OutFile %SETUP_DIR%\chrome_installer.exe ; `
-    Start-Process -FilePath %SETUP_DIR%\chrome_installer.exe -ArgumentList "/silent /install" -Wait ; `
-    Remove-Item %SETUP_DIR%\chrome_installer.exe
-
-# Download and extract ChromeDriver
-RUN powershell -Command `
-    Invoke-WebRequest -Uri %CHROMEDRIVER_URL% -OutFile %SETUP_DIR%\chromedriver.zip ; `
-    Expand-Archive -Path %SETUP_DIR%\chromedriver.zip -DestinationPath %SETUP_DIR% -Force ; `
-    Remove-Item %SETUP_DIR%\chromedriver.zip
-
-# Set PATH for chromedriver
-ENV PATH="%SETUP_DIR%\\chromedriver-win64;%PATH%"
-
-# Create Python virtual environment and install dependencies
-COPY . /tests
+# Copy project
 WORKDIR /tests
+COPY . /tests
 
-RUN cmd /c "python -m venv %VENV_DIR% && ^
-    call %VENV_DIR%\\Scripts\\activate.bat && ^
-    pip install --upgrade pip && ^
-    pip install selenium pytest"
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Default command to run tests
-CMD cmd /c "call %VENV_DIR%\\Scripts\\activate.bat && pytest testcases.py"
+# Run tests
+CMD ["pytest", "testcases.py"]
