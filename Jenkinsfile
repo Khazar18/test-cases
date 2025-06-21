@@ -3,45 +3,44 @@ pipeline {
 
     environment {
         EMAIL_RECIPIENT = 'qasimalik@gmail.com'
-        CHROME_URL = 'https://dl.google.com/chrome/install/latest/chrome_installer.exe'
-        CHROMEDRIVER_URL = 'https://storage.googleapis.com/chrome-for-testing-public/137.0.7151.119/win64/chromedriver-win64.zip'
-        SETUP_DIR = "${WORKSPACE}\\test-setup"
-        VENV_DIR = "${WORKSPACE}\\venv"
+        CHROME_URL = 'https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb'
+        CHROMEDRIVER_URL = 'https://storage.googleapis.com/chrome-for-testing-public/137.0.7151.119/linux64/chromedriver-linux64.zip'
+        SETUP_DIR = "${WORKSPACE}/test-setup"
+        VENV_DIR = "${WORKSPACE}/venv"
         PROJECT_NAME = 'Academora'
     }
 
-
-    
     stages {
-
         stage('Clone Repository') {
-        steps {
-            dir('Academora') {
-                git branch: 'main', url: 'https://github.com/Khazar18/Academora-Devops'
-                git branch: 'main', url: 'https://github.com/Khazar18/test-cases'
+            steps {
+                dir('Academora') {
+                    git branch: 'main', url: 'https://github.com/Khazar18/Academora-Devops'
+                    git branch: 'main', url: 'https://github.com/Khazar18/test-cases'
                 }
             }
-        }   
+        }
 
         stage('Install Chrome + ChromeDriver + Python') {
             steps {
-                bat '''
-                    if not exist "%SETUP_DIR%" mkdir "%SETUP_DIR%"
-                    cd /d "%SETUP_DIR%"
+                sh '''
+                    set -e
+                    mkdir -p "$SETUP_DIR"
+                    cd "$SETUP_DIR"
 
-                    echo Downloading Chrome...
-                    curl --ssl-no-revoke -L -o chrome_installer.exe "%CHROME_URL%"
-                    start /wait chrome_installer.exe /silent /install
+                    echo "Installing Chrome..."
+                    wget -qO chrome.deb "$CHROME_URL"
+                    sudo apt-get update
+                    sudo apt-get install -y ./chrome.deb || true
 
-                    echo Downloading ChromeDriver...
-                    curl -L -o chromedriver.zip "%CHROMEDRIVER_URL%"
-                    powershell -Command "Expand-Archive -Force 'chromedriver.zip' ."
+                    echo "Installing ChromeDriver..."
+                    wget -qO chromedriver.zip "$CHROMEDRIVER_URL"
+                    unzip -o chromedriver.zip
+                    chmod +x chromedriver-linux64/chromedriver
+                    sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
 
-                    echo set PATH=%SETUP_DIR%\\chromedriver-win64;%%PATH%% > "%SETUP_DIR%\\env.bat"
-
-                    echo Creating Python virtual environment...
-                    python -m venv "%VENV_DIR%"
-                    call "%VENV_DIR%\\Scripts\\activate.bat"
+                    echo "Creating Python virtual environment..."
+                    python3 -m venv "$VENV_DIR"
+                    source "$VENV_DIR/bin/activate"
                     python -m pip install --upgrade pip
                     pip install selenium pytest
                 '''
@@ -50,31 +49,29 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                bat '''
-                    call "%SETUP_DIR%\\env.bat"
-                    call "%VENV_DIR%\\Scripts\\activate.bat"
-
-                    echo Running pytest...
-                    pytest testcases.py > result.txt || exit /b 0
+                sh '''
+                    source "$VENV_DIR/bin/activate"
+                    cd "$WORKSPACE/Academora"
+                    pytest testcases.py | tee result.txt || true
                 '''
             }
         }
 
         stage('Build and Deploy') {
-        steps {
-            script {
-                sh 'docker-compose -p $PROJECT_NAME -f docker-compose.yml down -v --remove-orphans || true'
-                sh 'docker system prune -af || true'
-                sh 'docker volume prune -f || true'
-                sh 'docker-compose -p $PROJECT_NAME -f docker-compose.yml up -d --build'
+            steps {
+                script {
+                    sh 'docker-compose -p $PROJECT_NAME -f docker-compose.yml down -v --remove-orphans || true'
+                    sh 'docker system prune -af || true'
+                    sh 'docker volume prune -f || true'
+                    sh 'docker-compose -p $PROJECT_NAME -f docker-compose.yml up -d --build'
+                }
             }
-        }
         }
 
         stage('Send Email') {
             steps {
                 script {
-                    def testReport = readFile('result.txt')
+                    def testReport = readFile("${WORKSPACE}/Academora/result.txt")
                     def summary = testReport + """
 \n\n     Automated Test Execution Report
 =====================================================
