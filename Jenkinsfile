@@ -38,6 +38,7 @@ pipeline {
             }
         }
 
+
         stage('Run Tests') {
             steps {
                 bat '''
@@ -47,6 +48,14 @@ pipeline {
                     echo Running pytest...
                     pytest testcases.py > result.txt || exit /b 0
                 '''
+            }
+        }
+
+        stage('Clone Repo') {
+            steps {
+                dir('part 2') {
+                    git branch: 'main', url: 
+                }
             }
         }
 
