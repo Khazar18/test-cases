@@ -12,7 +12,7 @@ pipeline {
 
     
     stages {
-        
+
         stage('Install Chrome + ChromeDriver + Python') {
             steps {
                 bat '''
@@ -20,10 +20,8 @@ pipeline {
                     cd /d "%SETUP_DIR%"
 
                     echo Downloading Chrome...
-                    powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest '%CHROME_URL%' -OutFile 'chrome_installer.exe'"
-
+                    curl --ssl-no-revoke -L -o chrome_installer.exe "%CHROME_URL%"
                     start /wait chrome_installer.exe /silent /install
-
 
                     echo Downloading ChromeDriver...
                     curl -L -o chromedriver.zip "%CHROMEDRIVER_URL%"
@@ -40,8 +38,6 @@ pipeline {
             }
         }
 
-        
-
         stage('Run Tests') {
             steps {
                 bat '''
@@ -53,8 +49,6 @@ pipeline {
                 '''
             }
         }
-
-        
 
         stage('Send Email') {
             steps {
