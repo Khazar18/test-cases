@@ -9,12 +9,7 @@ CHROMEDRIVER_URL = 'https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/
         VENV_DIR = "${WORKSPACE}/venv"
     }
 
-    stages {
-        stage('Clone Repo') {
-            steps {
-                git 'https://github.com/Khazar18/test-cases'
-            }
-        }
+    
 
         stage('Install Chrome + ChromeDriver + Python') {
             steps {
