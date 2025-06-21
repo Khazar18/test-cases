@@ -20,8 +20,9 @@ pipeline {
                     cd /d "%SETUP_DIR%"
 
                     echo Downloading Chrome...
-                    curl -L -o chrome_installer.exe "%CHROME_URL%"
+                    powershell -Command "Invoke-WebRequest '%CHROME_URL%' -OutFile 'chrome_installer.exe'"
                     start /wait chrome_installer.exe /silent /install
+
 
                     echo Downloading ChromeDriver...
                     curl -L -o chromedriver.zip "%CHROMEDRIVER_URL%"
