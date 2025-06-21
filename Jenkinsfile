@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         EMAIL_RECIPIENT = 'qasimalik@gmail.com'
-        CHROME_URL = CHROME_URL = 'https://dl.google.com/chrome/install/latest/chrome_installer.exe'
+        CHROME_URL = 'https://dl.google.com/chrome/install/latest/chrome_installer.exe'
         CHROMEDRIVER_URL = 'https://storage.googleapis.com/chrome-for-testing-public/137.0.7151.119/win64/chromedriver-win64.zip'
         SETUP_DIR = "${WORKSPACE}/test-setup"
         VENV_DIR = "${WORKSPACE}/venv"
