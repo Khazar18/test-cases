@@ -20,7 +20,8 @@ pipeline {
                     cd /d "%SETUP_DIR%"
 
                     echo Downloading Chrome...
-                    powershell -Command "Invoke-WebRequest '%CHROME_URL%' -OutFile 'chrome_installer.exe'"
+                    powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest '%CHROME_URL%' -OutFile 'chrome_installer.exe'"
+
                     start /wait chrome_installer.exe /silent /install
 
 
