@@ -7,11 +7,21 @@ pipeline {
         CHROMEDRIVER_URL = 'https://storage.googleapis.com/chrome-for-testing-public/137.0.7151.119/win64/chromedriver-win64.zip'
         SETUP_DIR = "${WORKSPACE}\\test-setup"
         VENV_DIR = "${WORKSPACE}\\venv"
+        PROJECT_NAME = 'Academora'
     }
 
 
     
     stages {
+
+        stage('Clone Repository') {
+        steps {
+            dir('Academora') {
+                git branch: 'main', url: 'https://github.com/Khazar18/Academora-Devops'
+                git branch: 'main', url: 'https://github.com/Khazar18/test-cases'
+                }
+            }
+        }   
 
         stage('Install Chrome + ChromeDriver + Python') {
             steps {
@@ -38,7 +48,6 @@ pipeline {
             }
         }
 
-
         stage('Run Tests') {
             steps {
                 bat '''
@@ -51,12 +60,15 @@ pipeline {
             }
         }
 
-        stage('Clone Repo') {
-            steps {
-                dir('part 2') {
-                    git branch: 'main', url: 
-                }
+        stage('Build and Deploy') {
+        steps {
+            script {
+                sh 'docker-compose -p $PROJECT_NAME -f docker-compose.yml down -v --remove-orphans || true'
+                sh 'docker system prune -af || true'
+                sh 'docker volume prune -f || true'
+                sh 'docker-compose -p $PROJECT_NAME -f docker-compose.yml up -d --build'
             }
+        }
         }
 
         stage('Send Email') {
