@@ -9,8 +9,8 @@ CHROMEDRIVER_URL = 'https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/
         VENV_DIR = "${WORKSPACE}/venv"
     }
 
-    
-
+    stages{
+        
         stage('Install Chrome + ChromeDriver + Python') {
             steps {
                 sh '''
