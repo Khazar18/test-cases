@@ -14,7 +14,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 dir('Academora') {
-                    git branch: 'main', url: 'https://github.com/Khazar18/Academora-Devops'
+                    git branch: 'master', url: 'https://github.com/Khazar18/Academora-Devops'
                     git branch: 'main', url: 'https://github.com/Khazar18/test-cases'
                 }
             }
