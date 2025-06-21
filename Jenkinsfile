@@ -15,6 +15,8 @@ pipeline {
             steps {
                 dir('Academora') {
                     git branch: 'master', url: 'https://github.com/Khazar18/Academora-Devops'
+                }
+                dir('test-cases') {
                     git branch: 'main', url: 'https://github.com/Khazar18/test-cases'
                 }
             }
@@ -51,8 +53,8 @@ pipeline {
             steps {
                 sh '''
                     source "$VENV_DIR/bin/activate"
-                    cd "$WORKSPACE/Academora"
-                    pytest testcases.py | tee result.txt || true
+                    cd "$WORKSPACE/test-cases"
+                    pytest testcases.py | tee "$WORKSPACE/result.txt" || true
                 '''
             }
         }
@@ -71,7 +73,7 @@ pipeline {
         stage('Send Email') {
             steps {
                 script {
-                    def testReport = readFile("${WORKSPACE}/Academora/result.txt")
+                    def testReport = readFile("${WORKSPACE}/result.txt")
                     def summary = testReport + """
 \n\n     Automated Test Execution Report
 =====================================================
