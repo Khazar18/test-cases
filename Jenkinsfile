@@ -11,16 +11,26 @@ pipeline {
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Clone Academora') {
             steps {
                 dir('Academora') {
                     git branch: 'master', url: 'https://github.com/Khazar18/Academora-Devops'
                 }
+                
+            }
+        }
+
+
+        stage('Clone test-cases') {
+            steps {
+            
                 dir('test-cases') {
                     git branch: 'main', url: 'https://github.com/Khazar18/test-cases'
                 }
+                
             }
         }
+        
 
         stage('Install Chrome + ChromeDriver + Python') {
             steps {
