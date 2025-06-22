@@ -34,34 +34,33 @@ pipeline {
 
          stage('Install Chrome + ChromeDriver + Python') {
             steps {
-             sh '''
-                    set -e
-                    mkdir -p "$SETUP_DIR"
-                    cd "$SETUP_DIR"
-                
-                    echo "Installing dependencies..."
-                    sudo apt-get update
-                    sudo apt-get install -y unzip
-                
-                    echo "Downloading Chrome..."
-                    wget -q "$CHROME_URL" -O chrome.deb
-                    dpkg -x chrome.deb chrome
-                    export PATH="$SETUP_DIR/chrome/opt/google/chrome:$PATH"
-                
-                    echo "Downloading ChromeDriver..."
-                    wget -q "$CHROMEDRIVER_URL" -O chromedriver.zip
-                    unzip -o chromedriver.zip
-                    export PATH="$SETUP_DIR/chromedriver-linux64:$PATH"
-                
-                    echo "Exporting PATH for next stages..."
-                    echo "export PATH=$SETUP_DIR/chrome/opt/google/chrome:$SETUP_DIR/chromedriver-linux64:$PATH" > "$SETUP_DIR/env.sh"
-                
-                    echo "Installing Python virtual environment..."
-                    python3 -m venv "$VENV_DIR"
-                    . "$VENV_DIR/bin/activate"
-                    pip install --upgrade pip
-                    pip install selenium pytest
-                '''
+            sh '''
+                set -e
+                mkdir -p "$SETUP_DIR"
+                cd "$SETUP_DIR"
+    
+                echo "Downloading Chrome..."
+                wget -q "$CHROME_URL" -O chrome.deb
+                dpkg -x chrome.deb chrome
+                export PATH="$SETUP_DIR/chrome/opt/google/chrome:$PATH"
+    
+                echo "Downloading ChromeDriver..."
+                wget -q "$CHROMEDRIVER_URL" -O chromedriver.zip
+    
+                echo "Extracting ChromeDriver using Python..."
+                python3 -c "import zipfile; zipfile.ZipFile('chromedriver.zip').extractall()"
+    
+                export PATH="$SETUP_DIR/chromedriver-linux64:$PATH"
+    
+                echo "Exporting PATH for next stages..."
+                echo "export PATH=$SETUP_DIR/chrome/opt/google/chrome:$SETUP_DIR/chromedriver-linux64:$PATH" > "$SETUP_DIR/env.sh"
+    
+                echo "Installing Python virtual environment..."
+                python3 -m venv "$VENV_DIR"
+                . "$VENV_DIR/bin/activate"
+                pip install --upgrade pip
+                pip install selenium pytest
+        '''
 
 
             }
