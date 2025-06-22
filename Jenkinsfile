@@ -35,27 +35,31 @@ pipeline {
          stage('Install Chrome + ChromeDriver + Python') {
             steps {
                 sh '''
-                    mkdir -p $SETUP_DIR
-                    cd $SETUP_DIR
-
-                    echo "Downloading Chrome..."
-                    wget -q $CHROME_URL -O chrome.deb
-                    dpkg -x chrome.deb chrome
-                    export PATH=$SETUP_DIR/chrome/opt/google/chrome:$PATH
-
+                    set -e
+                    mkdir -p "$SETUP_DIR"
+                    cd "$SETUP_DIR"
+                
+                    echo "Installing Chrome..."
+                    wget -qO chrome.deb "$CHROME_URL"
+                    sudo apt-get update
+                    sudo apt-get install -y ./chrome.deb || true
+                
+                    echo "Installing unzip..."
+                    sudo apt-get install -y unzip
+                
                     echo "Downloading ChromeDriver..."
-                    wget -q $CHROMEDRIVER_URL -O chromedriver.zip
+                    wget -qO chromedriver.zip "$CHROMEDRIVER_URL"
                     unzip -o chromedriver.zip
-                    export PATH=$SETUP_DIR/chromedriver-linux64:$PATH
-
-                    echo "export PATH=$SETUP_DIR/chrome/opt/google/chrome:$SETUP_DIR/chromedriver-linux64:\$PATH" > $SETUP_DIR/env.sh
-
-                    echo "Installing Python virtual environment..."
-                    python3 -m venv $VENV_DIR
-                    . $VENV_DIR/bin/activate
-                    pip install --upgrade pip
+                    chmod +x chromedriver-linux64/chromedriver
+                    sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+                
+                    echo "Creating Python virtual environment..."
+                    python3 -m venv "$VENV_DIR"
+                    source "$VENV_DIR/bin/activate"
+                    python -m pip install --upgrade pip
                     pip install selenium pytest
                 '''
+
             }
         }
         
